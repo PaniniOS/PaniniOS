@@ -12,8 +12,11 @@
 # - edk2-ovmf (when UEFI booting)
 
 
-set -eu
+set -eu 
+# -e makes the script exit immediately if any command returns a non-zero exit status, and -u makes the script exit if it encounters an unset variable.
 
+
+# function prints usage instructions and available options for the script
 print_help() {
     local usagetext
     IFS='' read -r -d '' usagetext <<EOF || true
@@ -37,13 +40,13 @@ Example:
 EOF
     printf '%s' "${usagetext}"
 }
-
+# function is responsible for cleaning up the working directory. If the directory exists, it removes it and its contents
 cleanup_working_dir() {
     if [[ -d "${working_dir}" ]]; then
         rm -rf -- "${working_dir}"
     fi
 }
-
+# function copies OVMF_VARS.fd, a UEFI variable store file, to the working directory. It checks if the file exists and, if not, prints an error message
 copy_ovmf_vars() {
     if [[ ! -f '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' ]]; then
         printf 'ERROR: %s\n' "OVMF_VARS.fd not found. Install edk2-ovmf."
@@ -51,7 +54,7 @@ copy_ovmf_vars() {
     fi
     cp -av -- '/usr/share/edk2-ovmf/x64/OVMF_VARS.fd' "${working_dir}/"
 }
-
+# function checks whether the image file specified by the -i option exists and whether the -i option itself is empty. If any condition is not met, it prints an error message and exits
 check_image() {
     if [[ -z "$image" ]]; then
         printf 'ERROR: %s\n' "Image name can not be empty."
@@ -62,7 +65,7 @@ check_image() {
         exit 1
     fi
 }
-
+# Sets up QEMU options based on various parameters, including boot type (BIOS or UEFI), accessibility support, additional optical disc images, etc
 run_image() {
     if [[ "$boot_type" == 'uefi' ]]; then
         copy_ovmf_vars
